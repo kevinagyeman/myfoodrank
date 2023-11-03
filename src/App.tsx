@@ -1,10 +1,12 @@
-import { Button } from './components/ui/button';
+import { Route, Routes } from 'react-router-dom';
+import Index from './pages';
 
 export default function App() {
   return (
     <>
-      <p>ciao</p>
-      <Button>dd</Button>
+      <Routes>
+        <Route index element={<Index />} />
+      </Routes>
     </>
   );
 }
