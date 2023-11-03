@@ -25,10 +25,11 @@ const mappedRestaurants = (data: QuerySnapshot<DocumentData, DocumentData>) => {
   return result;
 };
 
-export const projectService = {
+export const service = {
   getAll: async () => {
     try {
       const data = await getDocs(query(restaurantsCollection));
+      console.log(mappedRestaurants(data));
       return mappedRestaurants(data);
     } catch (error) {
       console.error(error);
