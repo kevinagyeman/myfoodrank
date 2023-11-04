@@ -11,6 +11,7 @@ import {
   query,
   updateDoc,
   where,
+  DocumentReference,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { RestaurantSchema } from '@/types/restaurant-schema';
@@ -18,7 +19,7 @@ import { RestaurantSchema } from '@/types/restaurant-schema';
 const restaurantsCollection = collection(db, '/restaurants');
 const restaurantsScoreCollection = collection(db, '/restaurantsScore');
 const dishesCollection = collection(db, '/dishes');
-const dishesCollectionId = doc(db, 'dishes', 'KkDvNkd1h6CZI8HkHSq4');
+const dishesCollectionId = doc(db, 'dishes', '7zvOdpeKjaexkQudl3fx');
 
 const mappedRestaurants = (data: QuerySnapshot<DocumentData, DocumentData>) => {
   const result = data.docs.map((doc) => ({
@@ -38,6 +39,30 @@ const mappedRestaurants2 = (
   return result;
 };
 
+const getClubById = async (clubDocRef: DocumentReference) => {
+  try {
+    const data = await getDoc(clubDocRef);
+    if (data.exists()) {
+      const result = { ...data.data(), id: data.id };
+      return result;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const getById = async (projectId: string) => {
+  try {
+    const data = await getDoc(doc(dishesCollection, projectId));
+    if (data.exists()) {
+      const result = { ...data.data(), id: data.id };
+      return result;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export const service = {
   getAll: async () => {
     try {
@@ -54,12 +79,17 @@ export const service = {
       const data = await getDocs(
         query(
           restaurantsScoreCollection,
-          where('dishId', '==', dishesCollectionId)
+          where('dishId', '==', dishesCollectionId),
+          orderBy('score', 'desc')
         )
       );
-      console.log(mappedRestaurants2(data));
-
-      return mappedRestaurants2(data);
+      const result = data.docs.map((doc) => ({
+        ...doc.data(),
+        dishId: getClubById(doc.data().dishId),
+        id: doc.id,
+      }));
+      console.log(result);
+      return result;
     } catch (error) {
       console.error(error);
     }
