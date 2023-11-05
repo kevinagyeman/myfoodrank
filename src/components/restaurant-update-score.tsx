@@ -1,10 +1,15 @@
 import { scoreService } from '@/services/restaurant-score.service';
-import { dishesListState } from '@/store/dishes-store';
-import { restaurantsScoreListState } from '@/store/restaurants-score-store';
+import { dishesListState, initDishData } from '@/store/dishes-store';
+import {
+  initRestaurantData,
+  restaurantsListState,
+} from '@/store/restaurants-store';
 import { DishSchema } from '@/types/dish-schema';
+import { RestaurantSchema } from '@/types/restaurant-schema';
 import { useEffect, useState } from 'react';
-import { useRecoilState, useSetRecoilState } from 'recoil';
+import { useRecoilState } from 'recoil';
 import { dishService } from '../services/dish.service';
+import { restaurantService } from '../services/restaurant.service';
 import { Button } from './ui/button';
 import {
   Command,
@@ -13,9 +18,9 @@ import {
   CommandItem,
   CommandList,
 } from './ui/command';
-import { restaurantsListState } from '@/store/restaurants-store';
-import { restaurantService } from '../services/restaurant.service';
-import { RestaurantSchema } from '@/types/restaurant-schema';
+import { ChevronRight, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Link } from 'react-router-dom';
 
 export default function UpdateScore() {
   const [dishesList, setDishesList] = useRecoilState(dishesListState);
@@ -25,9 +30,10 @@ export default function UpdateScore() {
     useState<boolean>(false);
   const [isRestaurantsListVisible, setIsRestaurantsListVisible] =
     useState<boolean>(false);
-  const [dishId, setDishId] = useState<string>('');
-  const [restaurantId, setRestaurantId] = useState<string>('');
-  const [restaurantScoreId, setRestaurantScoreId] = useState<string>('');
+  const [dish, setDish] = useState<DishSchema>(initDishData);
+  const [restaurant, setRestaurant] =
+    useState<RestaurantSchema>(initRestaurantData);
+  const [hasVoted, setHasVoted] = useState<boolean>(false);
 
   const getDishesList = async () => {
     const data = await dishService.getAll({
@@ -49,21 +55,33 @@ export default function UpdateScore() {
     }
   };
 
-  const getByDishAndRestaurant = async () => {
+  const getByDishAndRestaurant = async (
+    dishId: string,
+    restaurantId: string
+  ) => {
     const data = await scoreService.getByDishAndRestaurant(
       dishId,
       restaurantId
     );
     if (data) {
-      setRestaurantScoreId(data);
+      return data;
     } else {
       console.log('id non trovato');
     }
   };
 
-  // const getScorex = async () => {
-  //   await scoreService.updateScore();
-  // };
+  const updateScore = async (operator: '+' | '-') => {
+    const scoreId = await getByDishAndRestaurant(dish.id, restaurant.id);
+    if (scoreId) {
+      await scoreService.updateScore(scoreId, operator);
+      setRestaurant(initRestaurantData);
+      setDish(initDishData);
+      setTimeout(() => {
+        setHasVoted(false);
+      }, 2000);
+      setHasVoted(true);
+    }
+  };
 
   useEffect(() => {
     getRestaurantsList();
@@ -80,7 +98,9 @@ export default function UpdateScore() {
           <p className='text-muted-foreground text-lg'>Trova una pizza</p>
         </div>
         <div>
-          <h3 className='text-2xl font-semibold mb-1'>Che pizza?</h3>
+          <h3 className='text-2xl font-semibold mb-1'>
+            Che pizza hai mangiato?
+          </h3>
           <Command
             className='rounded-lg border shadow-md'
             onMouseEnter={() => setIsDishesListVisible(true)}
@@ -94,7 +114,7 @@ export default function UpdateScore() {
                   <CommandItem key={index}>
                     <button
                       className='w-full text-left'
-                      onClick={() => setDishId(dish.id)}
+                      onClick={() => setDish({ ...dish, id: dish.id })}
                     >
                       {dish.name}
                     </button>
@@ -105,7 +125,7 @@ export default function UpdateScore() {
           </Command>
         </div>
         <div>
-          <h3 className='text-2xl font-semibold mb-1'>Che ristorante?</h3>
+          <h3 className='text-2xl font-semibold mb-1'>In quale ristorante?</h3>
           <Command
             className='rounded-lg border shadow-md'
             onMouseEnter={() => setIsRestaurantsListVisible(true)}
@@ -120,7 +140,9 @@ export default function UpdateScore() {
                     <CommandItem key={index}>
                       <button
                         className='w-full text-left'
-                        onClick={() => setRestaurantId(restaurant.id)}
+                        onClick={() =>
+                          setRestaurant({ ...restaurant, id: restaurant.id })
+                        }
                       >
                         {restaurant.name}
                       </button>
@@ -131,8 +153,38 @@ export default function UpdateScore() {
             )}
           </Command>
         </div>
-        <div className='mx-auto'>
-          <Button size={'lg'}>Cerca Piatto</Button>
+        {restaurant.id && dish.id && (
+          <div className='justify-center flex flex-row flex-wrap gap-3'>
+            <Button
+              className='p-10'
+              variant='secondary'
+              onClick={() => updateScore('+')}
+            >
+              <ThumbsUp className='h-10 w-10' />
+            </Button>
+            <Button
+              className='p-10'
+              variant='secondary'
+              onClick={() => updateScore('-')}
+            >
+              <ThumbsDown className='h-10 w-10' />
+            </Button>
+          </div>
+        )}
+        {hasVoted && (
+          <div className='justify-center flex'>
+            <Alert>
+              <AlertTitle>Votazione completa</AlertTitle>
+              <AlertDescription>
+                Grazie per aver contribuito alla votazione
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        <div className='justify-end flex flex-row flex-wrap gap-3'>
+          <Button size={'sm'} variant='outline'>
+            <Link to='/'>Torna alla home</Link>
+          </Button>
         </div>
       </div>
     </>

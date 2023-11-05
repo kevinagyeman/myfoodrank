@@ -73,10 +73,8 @@ export const scoreService = {
           where('dishId', '==', doc(db, 'dishes', dishId))
         )
       );
-      const result = data.docs.map((doc) => ({
-        id: doc.id,
-      }));
-      return result[0].id;
+      const result = data.docs[0].id;
+      return result;
     } catch (error) {
       console.error(error);
     }
