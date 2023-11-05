@@ -1,24 +1,19 @@
 import {
   DocumentData,
+  DocumentReference,
   QuerySnapshot,
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
   orderBy,
   query,
-  updateDoc,
-  where,
-  DocumentReference,
   runTransaction,
+  where,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { restaurantService } from './restaurant.service';
 import { dishService } from './dish.service';
-import { RestaurantScoreSchema } from '@/types/restaurant-score-schema';
-import { WhereSchema } from './query-schema';
+import { restaurantService } from './restaurant.service';
 
 const restaurantsCollection = collection(db, '/restaurants');
 const restaurantsScoreCollection = collection(db, '/restaurantsScore');
@@ -69,41 +64,19 @@ export const scoreService = {
     }
   },
 
-  // update: async (
-  //   restaurantScoreId: string,
-  //   restaurantScore: RestaurantScoreSchema,
-  //   count: number
-  // ) => {
-  //   try {
-  //     const data = doc(restaurantsScoreCollection, restaurantScoreId);
-  //     await updateDoc(data, {
-  //       ...restaurantScore,
-  //       score: count,
-  //       updatedAt: new Date(),
-  //     });
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // },
-
-  getByDishAndRestaurant: async (
-    restaurantId?: DocumentReference,
-    whereValue?: WhereSchema
-  ) => {
+  getByDishAndRestaurant: async (dishId: string, restaurantId: string) => {
     try {
       const data = await getDocs(
         query(
           restaurantsScoreCollection,
-          where('restaurantId', '==', restaurantsCollectionId),
-          where('dishId', '==', dishesCollectionId)
+          where('restaurantId', '==', doc(db, 'restaurants', restaurantId)),
+          where('dishId', '==', doc(db, 'dishes', dishId))
         )
       );
       const result = data.docs.map((doc) => ({
-        ...doc.data(),
         id: doc.id,
       }));
-      console.log(result);
-      return result;
+      return result[0].id;
     } catch (error) {
       console.error(error);
     }
