@@ -47,7 +47,6 @@ export const dishService = {
         return mappedDishes(data);
       } else {
         const data = await getDocs(query(dishesCollection, orderByQuery));
-        console.log(mappedDishes(data));
         return mappedDishes(data);
       }
     } catch (error) {

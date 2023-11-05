@@ -109,12 +109,12 @@ export const scoreService = {
     }
   },
 
-  getRankedRestaurants: async () => {
+  getRankedRestaurants: async (dishId: string) => {
     try {
       const data = await getDocs(
         query(
           restaurantsScoreCollection,
-          where('dishId', '==', dishesCollectionId),
+          where('dishId', '==', doc(db, 'dishes', dishId)),
           orderBy('score', 'desc')
         )
       );
